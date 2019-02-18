@@ -23,13 +23,13 @@ func (this Series) Lambda(ctx context.Context, lambda func(ctx context.Context, 
 
 			// Iterate over each row in the series
 			for _,value := range this.data {
-				wg.Add(1)
-
 				select {
 				case <- ctx.Done():
 					// Break out of the loop because the context has been cancelled or timed out
+					err = errors.Errorf("processing of data for lambda stopped prematurely due to closed context")
 					break
 				default:
+					wg.Add(1)
 					go func(value interface{}) {
 						// TODO: Add handler here for panics
 						defer wg.Done()
