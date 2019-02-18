@@ -22,7 +22,7 @@ func (this Series) Lambda(ctx context.Context, lambda func(ctx context.Context, 
 		if lambda != nil {
 
 			// Iterate over each row in the series
-			for index := range this.data {
+			for _,value := range this.data {
 				wg.Add(1)
 
 				select {
@@ -30,13 +30,13 @@ func (this Series) Lambda(ctx context.Context, lambda func(ctx context.Context, 
 					// Break out of the loop because the context has been cancelled or timed out
 					break
 				default:
-					go func() {
+					go func(value interface{}) {
 						// TODO: Add handler here for panics
 						defer wg.Done()
 
 						// Execute the lambda function
-						lambda(ctx, this.data[index])
-					}()
+						lambda(ctx, value)
+					}(value)
 				}
 			}
 
