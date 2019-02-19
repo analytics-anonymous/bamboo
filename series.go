@@ -3,6 +3,7 @@ package bamboo
 import (
 	"context"
 	"github.com/pkg/errors"
+	"reflect"
 	"sync"
 )
 
@@ -35,7 +36,7 @@ func (this Series) Lambda(ctx context.Context, lambda func(ctx context.Context, 
 						defer wg.Done()
 
 						// Execute the lambda function
-						lambda(ctx, value)
+						lambda(ctx, &value) // TODO: Should this return an error and break the processing loop?
 					}(value)
 				}
 			}
@@ -52,8 +53,23 @@ func (this Series) Lambda(ctx context.Context, lambda func(ctx context.Context, 
 	return err
 }
 
-func (this Series) SetData(data []interface{}) {
-	this.data = data
+// Ensure the data is a slice of data
+func (this Series) SetData(data interface{}) (err error) {
+	// TODO: Determine how to handle nil data here
+
+	switch reflect.TypeOf(data).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(data)
+
+		for i := 0; i < s.Len(); i++ {
+			// TODO: Attempt to determine the type of the data being input here
+			this.data = append(this.data, data)
+		}
+	default:
+		err = errors.New("series data must be set using a slice")
+	}
+
+	return err
 }
 
 func (this Series) GetData() (data []interface{}) {
