@@ -10,25 +10,25 @@ import (
 
 // Series for handling column level data of the data frame
 type Series struct {
-	data []interface{}
+	data  []interface{}
 	stype string // Expected type of data in this series
 }
 
 // Lambda function caller which will concurrently iterate over the data and execute a function literal
 // Ensure that all methods / data manipulation used in the function literal are thread safe
-func (this *Series) Lambda(ctx context.Context, lambda func(ctx context.Context, column interface{})(column_out interface{}, override bool))(data_out []interface{}, err error) {
+func (this *Series) Lambda(ctx context.Context, lambda func(ctx context.Context, column interface{}) (columnOut interface{}, override bool)) (dataOut []interface{}, err error) {
 	var wg = sync.WaitGroup{}
 
 	if this.data != nil {
 		// Ensure the lambda function is not nil
 		if lambda != nil {
 
-			data_out = make([]interface{}, len(this.data))
+			dataOut = make([]interface{}, len(this.data))
 
 			// Iterate over each row in the series
-			for index,_ := range this.data {
+			for index := range this.data {
 				select {
-				case <- ctx.Done():
+				case <-ctx.Done():
 					// Break out of the loop because the context has been cancelled or timed out
 					err = errors.Errorf("processing of data for lambda stopped prematurely due to closed context")
 					break
@@ -39,14 +39,14 @@ func (this *Series) Lambda(ctx context.Context, lambda func(ctx context.Context,
 						defer wg.Done()
 
 						// Execute the lambda function
-						var new_value interface{}
+						var newValue interface{}
 						var override bool
 
-						if new_value, override = lambda(ctx, this.data[index]); override {
-							this.data[index] = new_value
+						if newValue, override = lambda(ctx, this.data[index]); override {
+							this.data[index] = newValue
 						}
 
-						data_out[index] = new_value
+						dataOut[index] = newValue
 					}(index)
 				}
 			}
@@ -60,7 +60,7 @@ func (this *Series) Lambda(ctx context.Context, lambda func(ctx context.Context,
 		err = errors.Errorf("the data is nil in the series")
 	}
 
-	return data_out,err
+	return dataOut, err
 }
 
 // Ensure the data is a slice of data
