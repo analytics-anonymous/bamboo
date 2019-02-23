@@ -71,9 +71,15 @@ func (this *Series) SetData(data interface{}) (err error) {
 	case reflect.Slice:
 		s := reflect.ValueOf(data)
 
+		this.data = make([]interface{}, s.Len())
+
 		for i := 0; i < s.Len(); i++ {
 			// TODO: Attempt to determine the type of the data being input here
-			this.data = append(this.data, s.Index(i).Interface())
+			//switch reflect.TypeOf(data).Kind() {
+			//case reflect.Slice:
+			//
+			//}
+			this.data[i] = s.Index(i).Interface()
 		}
 	default:
 		err = errors.New("series data must be set using a slice")
